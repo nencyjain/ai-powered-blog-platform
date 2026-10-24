@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if blog %}Edit Blog - {{ blog.title }}{% else %}Create New Blog - AI Blog Platform{% endif %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="{{ url_for('index') }}" class="brand">
+        <div class="brand-icon">AI</div>
+        <div class="brand-text">
+          <h1>AI-Powered Blog Platform</h1>
+          <span>Codec Technologies Industrial Training</span>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        {% if api_configured %}
+          <span class="badge-live" title="OpenAI API configured and ready">
+            <span class="pulse-dot"></span> OpenAI Live
+          </span>
+        {% else %}
+          <span class="badge-demo" title="Demo Mode active (sample generation)">
+            <span class="pulse-dot"></span> Demo Mode
+          </span>
+        {% endif %}
+
+        <a href="{{ url_for('index') }}" class="btn btn-outline btn-sm">
+          &larr; Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Editor Container -->
+  <main class="container editor-wrapper">
+
+    <!-- Hidden field for existing blog ID -->
+    {% if blog %}
+      <input type="hidden" id="blog-id" value="{{ blog.id }}">
+    {% endif %}
+
+    <!-- Editor Header Title -->
+    <div class="editor-header">
+      <div class="editor-header-title">
+        <h2>{% if blog %}Edit Blog Post{% else %}Create New Blog Post{% endif %}</h2>
+        <p>Use AI to generate comprehensive content or compose your own markdown article.</p>
+      </div>
+
+      <div class="card-tags">
+        {% if blog %}
+          <span class="status-badge {% if blog.status == 'published' %}status-published{% else %}status-draft{% endif %}">
+            Status: {{ blog.status|capitalize }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 1. AI Blog Generator Card -->
+    <section class="generator-card">
+      <div class="generator-card-header">
+        <div class="generator-title">
+          <span>✨</span>
+          <span>AI Content Generator</span>
+        </div>
+        <div>
+          {% if api_configured %}
+            <span style="font-size: 0.75rem; color: #047857; font-weight: 600;">⚡ Connected to OpenAI API</span>
+          {% else %}
+            <span style="font-size: 0.75rem; color: #be185d; font-weight: 600;">🧪 Demo Mode Active (Sample Generator)</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="generator-grid">
+        <!-- Blog Topic Input -->
+        <div class="form-group">
+          <label for="blog-topic" class="form-label">Blog Topic / Idea</label>
+          <input 
+            type="text" 
+            id="blog-topic" 
+            class="form-control" 
+            placeholder="e.g. Introduction to Cloud Computing, Python Web Development..."
+            value="{{ blog.topic if blog else '' }}"
+          >
+        </div>
+
+        <!-- Tone Dropdown -->
+        <div class="form-group">
+          <label for="blog-tone" class="form-label">Tone</label>
+          <select id="blog-tone" class="form-control">
+            <option value="Professional" {% if blog and blog.tone == 'Professional' %}selected{% endif %}>Professional</option>
+            <option value="Friendly" {% if blog and blog.tone == 'Friendly' %}selected{% endif %}>Friendly</option>
+            <option value="Educational" {% if not blog or blog.tone == 'Educational' %}selected{% endif %}>Educational</option>
+            <option value="Casual" {% if blog and blog.tone == 'Casual' %}selected{% endif %}>Casual</option>
+          </select>
+        </div>
+
+        <!-- Length Dropdown -->
+        <div class="form-group">
+          <label for="blog-length" class="form-label">Length</label>
+          <select id="blog-length" class="form-control">
+            <option value="Short" {% if blog and blog.length == 'Short' %}selected{% endif %}>Short (~350 words)</option>
+            <option value="Medium" {% if not blog or blog.length == 'Medium' %}selected{% endif %}>Medium (~650 words)</option>
+            <option value="Long" {% if blog and blog.length == 'Long' %}selected{% endif %}>Long (~1000 words)</option>
+          </select>
+        </div>
+
+        <!-- Mode Selector -->
+        <div class="form-group">
+          <label for="generator-mode" class="form-label">Generation Mode</label>
+          <select id="generator-mode" class="form-control">
+            <option value="demo" {% if not api_configured %}selected{% endif %}>🧪 Demo Mode (Local Sample)</option>
+            <option value="openai" {% if api_configured %}selected{% endif %}>⚡ OpenAI API (Live AI)</option>
+          </select>
+        </div>
+
+        <!-- Generate Button -->
+        <div>
+          <button type="button" id="btn-generate-ai" class="btn btn-secondary" style="width: 100%;">
+            <span>⚡ Generate Blog</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Main Editor Layout (Split between Editor and SEO Sidebar) -->
+    <div class="editor-layout">
+
+      <!-- Left Column: Blog Title, Toolbar, Textarea, and Preview -->
+      <section class="editor-main-card">
+        <!-- Blog Title Field -->
+        <div class="form-group">
+          <label for="editor-title" class="form-label">Article Title</label>
+          <input 
+            type="text" 
+            id="editor-title" 
+            class="editor-title-input" 
+            placeholder="Enter an eye-catching blog title..." 
+            value="{{ blog.title if blog else '' }}"
+            required
+          >
+        </div>
+
+        <!-- Markdown Formatting Toolbar -->
+        <div class="markdown-toolbar">
+          <button type="button" class="tool-btn" data-action="bold" title="Bold"><strong>B</strong></button>
+          <button type="button" class="tool-btn" data-action="italic" title="Italic"><em>I</em></button>
+          <button type="button" class="tool-btn" data-action="h1" title="Heading 1">H1</button>
+          <button type="button" class="tool-btn" data-action="h2" title="Heading 2">H2</button>
+          <button type="button" class="tool-btn" data-action="h3" title="Heading 3">H3</button>
+          <button type="button" class="tool-btn" data-action="quote" title="Quote">&ldquo;</button>
+          <button type="button" class="tool-btn" data-action="bullet" title="Bullet List">&bull; List</button>
+          <button type="button" class="tool-btn" data-action="number" title="Numbered List">1. List</button>
+          <button type="button" class="tool-btn" data-action="code" title="Code Block">&lt;/&gt;</button>
+          <button type="button" class="tool-btn" data-action="link" title="Link">&#128279;</button>
+
+          <!-- View Mode Toggles -->
+          <div class="editor-view-toggle">
+            <button type="button" class="view-btn active" data-mode="split">Split</button>
+            <button type="button" class="view-btn" data-mode="write">Write</button>
+            <button type="button" class="view-btn" data-mode="preview">Preview</button>
+          </div>
+        </div>
+
+        <!-- Editor Panes (Textarea + Preview) -->
+        <div class="editor-panes split-mode" id="editor-panes">
+          <textarea 
+            id="editor-content" 
+            class="editor-textarea" 
+            placeholder="Write your blog post in Markdown format here, or use the AI generator above..."
+          >{{ blog.content if blog else '' }}</textarea>
+
+          <div id="editor-preview" class="preview-pane"></div>
+        </div>
+
+        <!-- Word Count and Reading Time Info -->
+        <div class="editor-meta-info">
+          <div>
+            <span id="word-count">0 words</span> &bull; 
+            <span id="read-time">~1 min read</span>
+          </div>
+          <div>Markdown supported</div>
+        </div>
+      </section>
+
+      <!-- Right Column: SEO Assistant Card -->
+      <aside class="seo-card">
+        <div class="seo-card-header">
+          <h3>
+            <span>🎯</span>
+            <span>SEO Assistant</span>
+          </h3>
+          <button type="button" id="btn-generate-seo" class="btn btn-outline-primary btn-sm">
+            ✨ Generate SEO
+          </button>
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Optimize your blog post for search engines to increase visibility and audience reach.
+        </p>
+
+        <!-- SEO Title -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="seo-title" class="form-label">SEO Meta Title</label>
+          <input 
+            type="text" 
+            id="seo-title" 
+            class="form-control" 
+            maxlength="70"
+            placeholder="Optimized title for search results..." 
+            value="{{ blog.seo.meta_title if blog and blog.seo else '' }}"
+          >
+          <div class="char-counter" id="seo-title-count">0/60</div>
+        </div>
+
+        <!-- SEO Meta Description -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="seo-description" class="form-label">Meta Description</label>
+          <textarea 
+            id="seo-description" 
+            class="form-control" 
+            rows="3" 
+            maxlength="180"
+            placeholder="Brief summary of your article for Google search snippets..."
+          >{{ blog.seo.meta_description if blog and blog.seo else '' }}</textarea>
+          <div class="char-counter" id="seo-desc-count">0/160</div>
+        </div>
+
+        <!-- Target Keywords -->
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="seo-keywords" class="form-label">Suggested Keywords</label>
+          <input 
+            type="text" 
+            id="seo-keywords" 
+            class="form-control" 
+            placeholder="ai, python, web development" 
+            value="{{ blog.seo.keywords if blog and blog.seo else '' }}"
+          >
+          <span style="font-size: 0.72rem; color: var(--text-subtle);">Comma-separated keywords</span>
+        </div>
+
+        <!-- Google Snippet Simulation -->
+        <label class="form-label">Search Result Snippet Preview</label>
+        <div class="google-preview">
+          <div class="google-preview-url">https://aiblogplatform.local &rsaquo; blog</div>
+          <div class="google-preview-title" id="google-preview-title">Your Blog Title</div>
+          <div class="google-preview-desc" id="google-preview-desc">Your blog post meta description will appear here as a Google search snippet preview.</div>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- Bottom Actions Bar -->
+    <div class="action-bar">
+      <div>
+        <a href="{{ url_for('index') }}" class="btn btn-outline">
+          Cancel
+        </a>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <button type="button" id="btn-save-draft" class="btn btn-outline-primary">
+          💾 Save as Draft
+        </button>
+        <button type="button" id="btn-publish" class="btn btn-primary">
+          🚀 Publish Post
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>AI-Powered Blog Platform &copy; 2026 &bull; 45-Day Industrial Training Project at Codec Technologies</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ (blog.seo.meta_title if blog and blog.seo and blog.seo.meta_title else blog.title) if blog else 'Blog Not Found' }} - AI Blog Platform</title>
+
+  {% if blog and blog.seo %}
+    {% if blog.seo.meta_description %}
+      <meta name="description" content="{{ blog.seo.meta_description }}">
+      <meta property="og:description" content="{{ blog.seo.meta_description }}">
+    {% endif %}
+    {% if blog.seo.keywords %}
+      <meta name="keywords" content="{{ blog.seo.keywords }}">
+    {% endif %}
+    <meta property="og:title" content="{{ blog.seo.meta_title or blog.title }}">
+    <meta property="og:type" content="article">
+  {% endif %}
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="{{ url_for('index') }}" class="brand">
+        <div class="brand-icon">AI</div>
+        <div class="brand-text">
+          <h1>AI-Powered Blog Platform</h1>
+          <span>Codec Technologies Industrial Training</span>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <a href="{{ url_for('index') }}" class="btn btn-outline btn-sm">
+          &larr; Dashboard
+        </a>
+        {% if blog %}
+          <a href="{{ url_for('editor', blog_id=blog.id) }}" class="btn btn-outline-primary btn-sm">
+            ✏️ Edit Post
+          </a>
+        {% endif %}
+        <a href="{{ url_for('editor') }}" class="btn btn-primary btn-sm">
+          + New Post
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Reader Body -->
+  <main class="container">
+
+    {% if blog %}
+      <article class="blog-reader-wrapper">
+
+        <!-- Article Header -->
+        <header class="reader-header">
+          <div class="reader-meta-top">
+            {% if blog.status == 'published' %}
+              <span class="status-badge status-published">● Published</span>
+            {% else %}
+              <span class="status-badge status-draft">○ Draft Preview</span>
+            {% endif %}
+
+            {% if blog.tone %}
+              <span class="meta-tag">{{ blog.tone }}</span>
+            {% endif %}
+            {% if blog.length %}
+              <span class="meta-tag">{{ blog.length }}</span>
+            {% endif %}
+          </div>
+
+          <h1 class="reader-title">{{ blog.title }}</h1>
+
+          <div class="reader-author-row">
+            <span>By <strong>AI Platform Author</strong></span>
+            <span>&bull;</span>
+            <span>{{ blog.updated_at or blog.created_at }}</span>
+            <span>&bull;</span>
+            <span>⏱️ {{ read_time_minutes }} min read ({{ word_count }} words)</span>
+          </div>
+        </header>
+
+        <!-- Main Formatted Markdown Content -->
+        <div class="reader-content">
+          {{ content_html }}
+        </div>
+
+        <!-- SEO Metadata Box (College Assessment / Project Verification Showcase) -->
+        {% if blog.seo and (blog.seo.meta_title or blog.seo.meta_description or blog.seo.keywords) %}
+          <section class="reader-seo-box">
+            <h4>🎯 Attached SEO Metadata (Generated via AI / SEO Assistant)</h4>
+            {% if blog.seo.meta_title %}
+              <p><strong>Meta Title:</strong> {{ blog.seo.meta_title }}</p>
+            {% endif %}
+            {% if blog.seo.meta_description %}
+              <p><strong>Meta Description:</strong> {{ blog.seo.meta_description }}</p>
+            {% endif %}
+            {% if blog.seo.keywords %}
+              <p><strong>Target Keywords:</strong> <code>{{ blog.seo.keywords }}</code></p>
+            {% endif %}
+          </section>
+        {% endif %}
+
+        <!-- Bottom Reader Navigation -->
+        <div class="action-bar" style="margin-top: 2rem;">
+          <a href="{{ url_for('index') }}" class="btn btn-outline">
+            &larr; Back to Dashboard
+          </a>
+
+          <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('editor', blog_id=blog.id) }}" class="btn btn-primary">
+              ✏️ Edit Post
+            </a>
+          </div>
+        </div>
+
+      </article>
+
+    {% else %}
+      <!-- 404 Not Found State -->
+      <div class="empty-state" style="margin-top: 4rem;">
+        <div class="empty-icon">❓</div>
+        <h3>Blog Post Not Found</h3>
+        <p>The blog post you are looking for does not exist or may have been deleted.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+          Return to Dashboard
+        </a>
+      </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>AI-Powered Blog Platform &copy; 2026 &bull; 45-Day Industrial Training Project at Codec Technologies</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
