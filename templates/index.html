@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - AI-Powered Blog Platform</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="{{ url_for('index') }}" class="brand">
+        <div class="brand-icon">AI</div>
+        <div class="brand-text">
+          <h1>AI-Powered Blog Platform</h1>
+          <span>Codec Technologies Industrial Training</span>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        {% if api_configured %}
+          <span class="badge-live" title="Connected to OpenAI API">
+            <span class="pulse-dot"></span> OpenAI Live
+          </span>
+        {% else %}
+          <span class="badge-demo" title="Running in Demo Mode without API Key">
+            <span class="pulse-dot"></span> Demo Mode
+          </span>
+        {% endif %}
+
+        <a href="{{ url_for('editor') }}" class="btn btn-primary">
+          <span>+ Create New Blog</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero & Statistics Section -->
+  <section class="hero-banner">
+    <div class="container hero-content">
+      <div class="hero-title">
+        <h2>Content Creator Dashboard</h2>
+        <p>Generate, edit, optimize, and publish high-ranking blogs with intelligent AI workflows.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">{{ total_count }}</div>
+          <div class="stat-label">Total Posts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" style="color: var(--success);">{{ published_count }}</div>
+          <div class="stat-label">Published</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" style="color: var(--warning);">{{ draft_count }}</div>
+          <div class="stat-label">Drafts</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Container -->
+  <main class="container">
+
+    {% if not api_configured %}
+      <div class="info-alert">
+        <p>
+          💡 <strong>Demo Mode is currently active:</strong> You can create, edit, preview, and save blogs right now with built-in structured sample generation. To enable live OpenAI API generation, add your <code>OPENAI_API_KEY</code> in a <code>.env</code> file.
+        </p>
+        <a href="{{ url_for('editor') }}" class="btn btn-sm btn-outline-primary">Try Generator</a>
+      </div>
+    {% endif %}
+
+    <!-- Filter & Search Controls -->
+    <div class="controls-bar">
+      <div class="filter-tabs">
+        <button class="tab-btn active" data-filter="all">All Posts ({{ total_count }})</button>
+        <button class="tab-btn" data-filter="published">Published ({{ published_count }})</button>
+        <button class="tab-btn" data-filter="draft">Drafts ({{ draft_count }})</button>
+      </div>
+
+      <input 
+        type="text" 
+        id="search-input" 
+        class="search-input" 
+        placeholder="🔍 Search blogs by title or topic..." 
+        aria-label="Search blogs"
+      >
+    </div>
+
+    <!-- Blog Posts Grid -->
+    {% if blogs and blogs|length > 0 %}
+      <div class="blog-grid" id="blog-cards-container">
+        {% for blog in blogs %}
+          <div 
+            class="blog-card" 
+            data-id="{{ blog.id }}" 
+            data-status="{{ blog.status }}"
+            data-title="{{ blog.title }}"
+            data-topic="{{ blog.topic or '' }}"
+          >
+            <div>
+              <div class="card-header-top">
+                {% if blog.status == 'published' %}
+                  <span class="status-badge status-published">● Published</span>
+                {% else %}
+                  <span class="status-badge status-draft">○ Draft</span>
+                {% endif %}
+
+                <div class="card-tags">
+                  {% if blog.tone %}
+                    <span class="meta-tag">{{ blog.tone }}</span>
+                  {% endif %}
+                  {% if blog.length %}
+                    <span class="meta-tag">{{ blog.length }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <h3 class="card-title">
+                <a href="{{ url_for('view_blog', blog_id=blog.id) }}">{{ blog.title }}</a>
+              </h3>
+
+              <p class="card-excerpt">
+                {{ blog.content | replace('#', '') | replace('*', '') | truncate(150, True, '...') }}
+              </p>
+            </div>
+
+            <div class="card-footer">
+              <span class="card-date">{{ blog.updated_at or blog.created_at }}</span>
+
+              <div class="card-actions">
+                <a href="{{ url_for('view_blog', blog_id=blog.id) }}" class="btn btn-outline btn-sm" title="View Public Post">
+                  View
+                </a>
+                <a href="{{ url_for('editor', blog_id=blog.id) }}" class="btn btn-outline-primary btn-sm" title="Edit Post">
+                  Edit
+                </a>
+                <button 
+                  class="btn btn-danger btn-sm btn-delete-blog" 
+                  data-id="{{ blog.id }}" 
+                  data-title="{{ blog.title }}"
+                  title="Delete Post"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div id="no-results-message" class="empty-state" style="display: none;">
+        <div class="empty-icon">🔍</div>
+        <h3>No matching posts found</h3>
+        <p>Try adjusting your search terms or filter selection.</p>
+      </div>
+
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h3>No Blog Posts Yet</h3>
+        <p>Get started by creating your very first AI-generated blog post!</p>
+        <a href="{{ url_for('editor') }}" class="btn btn-primary">
+          + Create Your First Blog
+        </a>
+      </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>AI-Powered Blog Platform &copy; 2026 &bull; 45-Day Industrial Training Project at Codec Technologies</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
